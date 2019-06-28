@@ -4,69 +4,85 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.IOException;
 import java.util.Arrays;
 
-import com.example.commons.domain.InMessage;
-import org.hibernate.type.SerializationException;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.SerializationException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-public class JsonRedisSerializer<T> extends Jackson2JsonRedisSerializer<T> {
+public class JsonRedisSerializer extends Jackson2JsonRedisSerializer<Object> {
 
 	private ObjectMapper objectMapper = new ObjectMapper();
 
-	@SuppressWarnings("unchecked")
 	public JsonRedisSerializer() {
-		super((Class<T>) InMessage.class);
+		super(Object.class);
 	}
 
-	@Override
-	public T deserialize(byte[] bytes) throws SerializationException {
-		ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
-		DataInputStream in = new DataInputStream(bis);
-		try {
-			// 读取类名
-			int len = in.readInt();// 读取一个整数，这个整数是后面类名的长度
-			byte[] classNameBytes = new byte[len];
-			in.readFully(classNameBytes);
-			String className = new String(classNameBytes, "UTF-8");
-
-			// Class.forName("com.mysql.jdbc.Driver")
-			@SuppressWarnings("unchecked")
-			Class<T> cla = (Class<T>) Class.forName(className);
-
-			// len + 4 : len是类名的长度，4则是最开始的int的长度，它们去掉
-			T o = objectMapper.readValue(Arrays.copyOfRange(bytes, len + 4, bytes.length), cla);
-			return o;
-
-		} catch (IOException | ClassNotFoundException e) {
-			throw new SerializationException(e.getLocalizedMessage(), e);
-		}
-	}
-
+	// 序列化对象的时候被调用的方法，负责把InMessage转换为byte[]
 	@Override
 	public byte[] serialize(Object t) throws SerializationException {
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		DataOutputStream out = new DataOutputStream(bos);
-		// 在写数据的时候，在前面先写上一个数字，用于表示类名的长度
-		// 紧接着写出类名
+		// 我们现在希望把对象序列化成JSON字符串，但是JSON字符串本身不确定对象的类型，所以需要扩展：
+		// 序列化的时候先把类名的长度写出去，再写出类名，最后再来写JSON字符串。
+
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();// 把数据输出到一个字节数组
+		DataOutputStream out = new DataOutputStream(baos);// 把输出流封装成数据输出流
 		try {
-			// writeUTF本身就先把长度写出去，然后再写内容
-//			out.writeUTF(t.getClass().getName());
-			String className = t.getClass().getName();
-			byte[] classNameBytes = className.getBytes();
+			String className = t.getClass().getName();// 获取类名
+			byte[] classNameBytes = className.getBytes("UTF-8");
 
-			out.writeInt(classNameBytes.length);
-			out.write(classNameBytes);
+			out.writeInt(classNameBytes.length);// 先把类名的长度写出去
+			out.write(classNameBytes);// 把类名转换得到的字节数组写出
 
-			// 最后把对象序列化后的内容写出
-			out.write(super.serialize(t));
-			out.flush();
-		} catch (IOException e) {
-			e.printStackTrace();
+			// 使用原本父类的方法，负责把对象转换为字节数组
+			byte[] data = super.serialize(t);
+			out.write(data);
+
+			// 得到结果数组
+			byte[] result = baos.toByteArray();
+			return result;
+		} catch (Exception e) {
+			throw new SerializationException("序列化对象出现问题：" + e.getLocalizedMessage(), e);
 		}
-		return bos.toByteArray();
+//		return super.serialize(t);
+	}
+
+	// 在反序列化的时候被调用的方法，负责把字节数组转换为InMessage
+	@Override
+	public Object deserialize(byte[] bytes) throws SerializationException {
+
+		if (bytes == null || bytes.length == 0) {
+			return null;
+		}
+
+		ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
+		DataInputStream in = new DataInputStream(bais);
+
+		// 在写的时候，先把类名的长度传入，此时要先得到类名的长度，再根据类名的长度来读取类名。
+		try {
+			int length = in.readInt();
+			byte[] classNameBytes = new byte[length];
+			// 把字节数组填满才返回
+			in.readFully(classNameBytes);
+			// 把读取到的字节数组，转换为类名
+			String className = new String(classNameBytes, "UTF-8");
+			// 通过类名，加载类对象
+			Class<?> cla = (Class<?>) Class.forName(className);
+
+			// length + 4 : 表示类名的长度和int的长度，一个int占4个字节
+			return this.objectMapper.readValue(Arrays.copyOfRange(bytes, length + 4, bytes.length), cla);
+		} catch (Exception e) {
+			throw new SerializationException("反序列化对象出现问题：" + e.getLocalizedMessage(), e);
+		}
+
+//		return super.deserialize(bytes);
+	}
+
+	public ObjectMapper getObjectMapper() {
+		return objectMapper;
+	}
+
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
 	}
 }

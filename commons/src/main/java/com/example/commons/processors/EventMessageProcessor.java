@@ -4,8 +4,5 @@ import com.example.commons.domain.event.EventInMessage;
 
 public interface EventMessageProcessor {
 
-		public void onMessage(EventInMessage msg);
-	}
-
-
-
+	public void onMessage(EventInMessage msg);
+}

@@ -4,6 +4,13 @@ spring:
       username: hj_0
       password: 1234
       
+   jpa:
+      # 自动生成数据库的表
+      generate-ddl: true
+      properties:
+         # 设置一个方言，用于自动加上MySQL的引擎名称，默认MyISAM不支持事务，不推荐使用。
+         hibernate.dialect: org.hibernate.dialect.MySQL57Dialect
+      
    redis:
       host:120.78.4.85
       port:6379

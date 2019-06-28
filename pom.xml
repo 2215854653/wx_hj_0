@@ -13,9 +13,11 @@
 	</parent>
 	
 	<properties>
+		<!-- 基于Spring Boot项目可以使用java.version来指定JDK的版本号，可选的：1.8、9、10、11 -->
+		<!-- 11是目前最新的稳定版，下一个稳定版2年后发布 -->
 		<java.version>11</java.version>
 		<!-- 源代码的字符编码 -->
-			<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<!-- 报告文件的字符编码 -->
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
@@ -23,8 +25,8 @@
 		<module>weixin</module>
 		<module>subscribe</module>
 		<module>commons</module>
-
 		<module>unsubscribe</module>
-		<module>self-menu</module>
+		<module>self_menu</module>
+		<module>library</module>
 	</modules>
 </project>

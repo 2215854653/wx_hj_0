@@ -1,6 +1,7 @@
 package com.example.weixin;
 
-import com.example.commons.EventListenerConfig;
+
+import com.example.commons.config.EventListenerConfig;
 import com.example.commons.domain.event.EventInMessage;
 import com.example.commons.processors.EventMessageProcessor;
 import org.slf4j.Logger;
@@ -14,51 +15,56 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.util.xml.StaxUtils;
 
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-// 实现ApplicationContextAware接口的目的：为了让当前对象能够得到Spring容器本身，能够通过Spring的容器来找到里面的Bean
 @SpringBootApplication
-@ComponentScan(basePackages = "com.example")
-@EnableJpaRepositories(basePackages = "com.example")
-@EntityScan(basePackages = "com.example")
-public class SubscribeApplication implements ApplicationContextAware
-// 为了让非WEB应用能够一直等待信息的到来，必须实现CommandLineRunner接口
-		, EventListenerConfig {
+@ComponentScan("com.example")
+@EnableJpaRepositories("com.example")
+@EntityScan("com.example")
+public class SubscribeApplication implements //
+		EventListenerConfig, //
+		// 得到Spring的容器
+		ApplicationContextAware {
+	private ApplicationContext ctx;// Spring容器
 
-	private static final Logger LOG = LoggerFactory.getLogger(SubscribeApplication.class);
-	private ApplicationContext ctx;
-
-	// 这个方法，会在当前实例创建之后，由Spring自己调用，而Spring会把它本身传入进来
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		ctx = applicationContext;
 	}
 
-	@Bean()
-	public XmlMapper xmlMapper() {
-		XmlMapper mapper = new XmlMapper(StaxUtils.createDefensiveInputFactory());
-		return mapper;
-	}
+	private static final Logger LOG = LoggerFactory.getLogger(SubscribeApplication.class);
 
-	@Override
-	public void handleEvent(EventInMessage event) {
-		LOG.trace("事件处理程序收到的消息：{}", event);
-		String eventType = event.getEvent();// 获取事件类型
-		eventType = eventType.toLowerCase();// 转换为小写
-
-		// 调用消息的处理器，进行具体的消息处理
-		String beanName = eventType + "MessageProcessor";
-		EventMessageProcessor mp = (EventMessageProcessor) ctx.getBean(beanName);
-		if (mp == null) {
-			LOG.error("事件 {} 没有找到对应的处理器", eventType);
-		} else {
-			mp.onMessage(event);
+	public void handle(EventInMessage msg) {
+		// 1.当前类实现ApplicationContextAware接口，用于获得Spring容器
+		// 2.把Event全部转换为小写，并且拼接上MessageProcessor作为ID
+		String id = msg.getEvent().toLowerCase() + "MessageProcessor";
+		// 3.使用ID到Spring容器获取一个Bean
+		try {
+			EventMessageProcessor mp = (EventMessageProcessor) ctx.getBean(id);
+			// 4.强制类型转换以后，调用onMessage方法
+			if (mp != null) {
+				mp.onMessage(msg);
+			} else {
+				LOG.warn("Bean的ID {} 无法调用对应的消息处理器: {} 对应的Bean不存在", id, id);
+			}
+		} catch (Exception e) {
+			LOG.warn("Bean的ID {} 无法调用对应的消息处理器: {}", id, e.getMessage());
+//			LOG.trace(e.getMessage(), e);
 		}
 	}
 
-	public static void main(String[] args) {
-		SpringApplication.run(SubscribeApplication.class, args);
+	@Bean
+	public ObjectMapper objectMapper() {
+		return new ObjectMapper();
 	}
+
+	public static void main(String[] args) throws InterruptedException {
+		SpringApplication.run(SubscribeApplication.class, args);
+//		System.out.println("Spring Boot应用启动成功");
+		// 让程序进入等待、不要退出
+//		CountDownLatch countDownLatch = new CountDownLatch(1);
+//		countDownLatch.await();
+	}
+
 }

@@ -1,40 +1,33 @@
 package com.example.weixin;
 
-
+import com.example.commons.domain.InMessage;
+import com.example.commons.service.JsonRedisSerializer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
-import org.springframework.util.xml.StaxUtils;
-
-import com.example.commons.domain.InMessage;
-import com.example.commons.service.JsonRedisSerializer;
-import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 
 @SpringBootApplication
 public class WeixinApplication {
-	
-	@Bean()
-	public XmlMapper xmlMapper() {
-		XmlMapper mapper = new XmlMapper(StaxUtils.createDefensiveInputFactory());
-		return mapper;
-	}
 
-	// RedisTemplate是一个模板，用于访问数据库的！
-	@Bean // 把对象放入容器里面
-	public RedisTemplate<String, ? extends InMessage> inMessageTemplate(//
-			// 获取Redis的连接工厂，这个配置是由Spring Boot自动完成，只需要这里说需要，然后就有了！
-			// 为了让Spring Boot能够完成自动化配置，必须有spring.redis前缀的配置参数。
-			@Autowired RedisConnectionFactory connectionFactory) {
+	// 相当于Spring的XML配置方式中的<bean>元素
+	@Bean
+	public RedisTemplate<String, InMessage> inMessageTemplate(//
+			@Autowired RedisConnectionFactory redisConnectionFactory) {
+		RedisTemplate<String, InMessage> template = new RedisTemplate<>();
+		template.setConnectionFactory(redisConnectionFactory);
 
-		RedisTemplate<String, ? extends InMessage> template = new RedisTemplate<>();
-		template.setConnectionFactory(connectionFactory);
-		// 使用序列化程序完成对象的序列化和反序列化，可以自定义
-		// 序列化程序负责Java对象和其他格式的数据相互转换。
-		// JSON是一种纯文本的格式，非常方便在网络上传输。
-		template.setValueSerializer(new JsonRedisSerializer<InMessage>());
+		// 设置一个序列化程序，就可以非常方便自动序列化！
+		// Redis是键值对方式存储数据的，所以其实KeySerializer是把键序列化成可以传输的数据。
+		// 由于泛型的时候已经确定，Key其实是String，所以可以使用系统默认的
+//		template.setKeySerializer(new StringRedisSerializer());
+
+		// 由于不确定是哪个类型，InMessage只是一个父类，它有许多不同的子类。
+		// 因此扩展Jackson2JsonRedisSerializer变得极其重要：重写方法、不要构造参数
+		template.setValueSerializer(new JsonRedisSerializer());
+//		template.setDefaultSerializer(new JsonRedisSerializer());
 
 		return template;
 	}

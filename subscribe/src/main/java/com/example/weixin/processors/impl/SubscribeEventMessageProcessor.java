@@ -4,68 +4,52 @@ import com.example.commons.domain.User;
 import com.example.commons.domain.event.EventInMessage;
 import com.example.commons.processors.EventMessageProcessor;
 import com.example.commons.repository.UserRepository;
-import com.example.weixin.service.WeixinProxy;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.example.commons.service.WeixinProxy;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-// 把对象加入Spring容器，并且根据事件处理查找Bean的规则给一个名字
 @Service("subscribeMessageProcessor")
 public class SubscribeEventMessageProcessor implements EventMessageProcessor {
-
-	private static final Logger LOG = LoggerFactory.getLogger(SubscribeEventMessageProcessor.class);
 
 	@Autowired
 	private UserRepository userRepository;
 	@Autowired
-	private WeixinProxy proxy;
+	private WeixinProxy weixinProxy;
 
 	@Override
-	public void onMessage(EventInMessage event) {
-		LOG.trace("关注事件处理器被调用，收到的消息:\n {} ", event);
-
-		if (!event.getEvent().equals("subscribe")) {
-			// 只处理关注事件
+	public void onMessage(EventInMessage msg) {
+		if (!msg.getEvent().equals("subscribe")) {
+			// 非关注事件，不处理
 			return;
 		}
-
+		// 发生操作的用户的OpenId
+		String openId = msg.getFromUserName();
 		// 1.检查用户是否已经关注
-		// 1.1.需要查询数据库里面是否有关注记录，需要增加spring-data-jpa的依赖，基于Spring Data JPA来操作数据库
-//		<dependency>
-//			<groupId>org.springframework.boot</groupId>
-//			<artifactId>spring-boot-starter-data-jpa</artifactId>
-//		</dependency>
-
-		// 1.2.在domain里面增加User类，表示用户信息，字段最少要包含用户的ID、昵称、关注状态，
-		// 详细的用户信息参考公众号文档里面的用户信息接口。
-		// 具体参考《User.java》
-
-		// 1.3.需要增加一个repository包，在此包里面增加UserRepository接口，用于操作User类的数据
-
-		// 1.4.在UserRepository类里面增加一个根据用户的OpenID来查询用户信息的方法，如果返回一个User对象，表示之前有关注
-		String openId = event.getFromUserName();
 		User user = this.userRepository.findByOpenId(openId);
-
-		// 2.如果用户已经关注，直接忽略不处理消息
-		if (user != null) {
-			if (user.getStatus() == User.Status.IS_SUBSCRIBE) {
+		// 2.如果用户还未关注，则调用远程接口获取用户信息
+		if (user == null || user.getStatus() != User.Status.IS_SUBSCRIBE) {
+			// 3.调用远程接口
+			// TODO 根据ToUserName找到对应的微信号
+			String account = "";
+			User wxUser = weixinProxy.getUser(account, openId);
+			if (wxUser == null) {
 				return;
 			}
+			// 4.存储到数据库
+			if (user != null) {
+				// 原来关注过
+				wxUser.setId(user.getId());
+				wxUser.setSubTime(user.getSubTime());
+				wxUser.setUnsubTime(null);
+			}
+			wxUser.setStatus(User.Status.IS_SUBSCRIBE);
 
-			// 3.如果用户之前曾经关注，但是已经取消，现在重新关注，把状态修改成【已关注】即可，并且重新获取用户信息
+			// 如果有id的值，会自动update；没有id的值会insert
+			this.userRepository.save(wxUser);
+
+			// 通过客服接口，发生一条信息给用户
+			weixinProxy.sendText(account, openId, "欢迎关注我的公众号，回复帮助可获得人工智能菜单");
 		}
-		// 4.如果用户之前没有关注，新增关注记录，并且获取用户信息
-
-		User wxUser = this.proxy.getWxUser(openId);// 调用远程接口获取用户信息
-		if (user != null) {
-			wxUser.setId(user.getId());
-		}
-		wxUser.setStatus(User.Status.IS_SUBSCRIBE);
-		// 保存用户信息
-		this.userRepository.save(wxUser);
-
-		// 5.通过客服接口，返回一个关注后的欢迎消息给用户
-		this.proxy.sendText(openId, "欢迎关注公众号，回复\"学习\"可以获得智能菜单。");
 	}
 }
