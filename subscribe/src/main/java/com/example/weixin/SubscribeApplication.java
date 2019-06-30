@@ -1,7 +1,6 @@
 package com.example.weixin;
 
-
-import com.example.weixin.EventListenerConfig;
+import com.example.commons.config.EventListenerConfig;
 import com.example.commons.domain.event.EventInMessage;
 import com.example.commons.processors.EventMessageProcessor;
 import org.slf4j.Logger;

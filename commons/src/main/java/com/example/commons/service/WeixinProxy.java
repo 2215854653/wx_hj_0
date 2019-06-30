@@ -10,14 +10,14 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.Charset;
 import java.util.concurrent.CompletableFuture;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import com.example.commons.domain.User;
 import com.example.commons.domain.text.TextOutMessage;
 import com.example.commons.service.TokenManager;
+import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
