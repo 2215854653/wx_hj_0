@@ -14,7 +14,7 @@ import com.example.commons.domain.User;
 import com.example.commons.domain.text.TextOutMessage;
 import com.example.commons.service.TokenManager;
 import org.slf4j.Logger;
-// import org.slf4j.LoggerFactory;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
