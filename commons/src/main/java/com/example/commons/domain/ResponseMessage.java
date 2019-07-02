@@ -1,9 +1,8 @@
 package com.example.commons.domain;
 
 public abstract class ResponseMessage {
-
 	/**
-	 * 状态为1，表示成功，其他数字都表示失败
+	 * 状态1，表示成功，其他数字表示是失败
 	 */
 	private int status;
 
@@ -14,4 +13,5 @@ public abstract class ResponseMessage {
 	public void setStatus(int status) {
 		this.status = status;
 	}
+  
 }

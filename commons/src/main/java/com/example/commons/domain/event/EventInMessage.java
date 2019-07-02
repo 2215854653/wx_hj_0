@@ -3,6 +3,7 @@ package com.example.commons.domain.event;
 import javax.xml.bind.annotation.XmlElement;
 
 import com.example.commons.domain.InMessage;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class EventInMessage extends InMessage {

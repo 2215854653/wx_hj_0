@@ -3,7 +3,6 @@ package com.example.commons.domain;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public abstract class OutMessage {
-
 	@JsonProperty("touser")
 	private String toUser;
 	@JsonProperty("msgtype")

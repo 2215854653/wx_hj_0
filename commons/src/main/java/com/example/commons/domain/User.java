@@ -20,13 +20,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @Entity
 @Table(name = "wx_user")
 public class User {
-
-	@Id // 表示一个主键
-	@GenericGenerator(name = "uuid2", strategy = "uuid2") // 定义Hibernate的主键生成器
-	@GeneratedValue(generator = "uuid2") // 使用名为uuid2的主键生成器
-	@Column(length = 36) // 指定列的长度
+	
+	@Id      // 表示一个主键
+	@GenericGenerator(name = "uuid2", strategy = "uuid2")    // 定义Hibernate的主键生成器
+	@GeneratedValue(generator = "uuid2")   // 使用名为uuid2的主键生成器
+	@Column(length = 36)    // 指定列的长度
 	private String id;
-
+	
+	
 	public static enum Status {
 		/**
 		 * 已经关注

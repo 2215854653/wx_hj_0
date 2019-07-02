@@ -9,6 +9,9 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.charset.Charset;
 import java.util.concurrent.TimeUnit;
 
+import com.example.commons.domain.ResponseError;
+import com.example.commons.domain.ResponseMessage;
+import com.example.commons.domain.ResponseToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,14 +20,10 @@ import org.springframework.data.redis.core.BoundValueOperations;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import com.example.commons.domain.ResponseError;
-import com.example.commons.domain.ResponseMessage;
-import com.example.commons.domain.ResponseToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Service
-public class TokenManagerImpl implements TokenManager {
-
+public class TokenManagerImpl implements TokenManager{
 	private static final Logger LOG = LoggerFactory.getLogger(TokenManagerImpl.class);
 	@Autowired
 	private ObjectMapper objectMapper;
@@ -98,8 +97,8 @@ public class TokenManagerImpl implements TokenManager {
 		// 实际项目绝对不能这样干，因为获取令牌的接口每天最多能够调用2000次（每个appid）。
 		// 这里现在暂时为了简化而不考虑缓存，后面会进行重构。
 
-		String appid = "wx923a0975761a87e2";
-		String appsecret = "308461c5476742ac96fbc6ebb7010f79";
+		String appid = "wx375cd9c53c364fc4";
+		String appsecret = "ad91eb3762d1336c39a417173bc47aba";
 
 		String url = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential"//
 				+ "&appid=" + appid//
@@ -145,4 +144,5 @@ public class TokenManagerImpl implements TokenManager {
 				+ ((ResponseError) rm).getErrorCode() //
 				+ "，错误描述=" + ((ResponseError) rm).getErrorMessage());
 	}
+
 }

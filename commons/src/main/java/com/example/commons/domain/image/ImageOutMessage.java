@@ -1,10 +1,10 @@
 package com.example.commons.domain.image;
 
 import com.example.commons.domain.OutMessage;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ImageOutMessage extends OutMessage {
-
 	public static class Media {
 		@JsonProperty("media_id")
 		private String mediaId;
