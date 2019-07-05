@@ -1,6 +1,6 @@
 package com.example.weixin.processors;
 
-import org.lemonpzl.commons.domain.event.EventInMessage;
+import com.example.commons.domain.event.EventInMessage;
 
 public interface EventMessageProcessor {
 	public void onMessage(EventInMessage msg);

@@ -2,8 +2,8 @@ package subscribe;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.lemonpzl.commons.service.TokenManager;
-import org.lemonpzl.weixin.SubscribeApplication;
+import com.example.commons.service.TokenManager;
+import com.example.weixin.SubscribeApplication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ContextConfiguration;
